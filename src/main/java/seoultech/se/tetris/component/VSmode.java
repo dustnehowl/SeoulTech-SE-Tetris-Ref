@@ -33,11 +33,24 @@ public class VSmode extends JFrame {
     public static String BORDER_CHAR = "X";
     public static String BLOCK_CHAR = "O";
     public static String BLANK_CHAR = " ";
+    public static final String win_BORDER_CHAR = "X";
+    public static final String win_BLOCK_CHAR = "O";
+    public static final String win_BLANK_CHAR = "     ";
+    public static final String mac_BORDER_CHAR = "X";
+    public static final String mac_BLOCK_CHAR = "O";
+    public static final String mac_BLANK_CHAR = " ";
+    public static final String BLOCK_CHAR_LIST = " OOLEDOXXXXX";
+
+    public static String os;
+    public static final int animate_idx = 6;
+
+    private String mode;
+    private String item_mode = "itemScore";
+    private String normal_mode = "normalScore";
 
     //ready_game vs_mode
     private KeyListener playerKeyListener;
     private SimpleAttributeSet styleSet, styleSet2;
-    private Timer timer;
 
     //key setted
     private int display_width = 1000;
@@ -72,6 +85,21 @@ public class VSmode extends JFrame {
         this.add(p1.player);
         this.add(p2.player);
 
+        // readOS
+        os = System.getProperty("os.name").toLowerCase();
+        //System.out.println(os);
+        if(os.contains("win")){
+            BORDER_CHAR = win_BORDER_CHAR;
+            BLOCK_CHAR = win_BLOCK_CHAR;
+            BLANK_CHAR = win_BLANK_CHAR;
+        }
+        else
+        {
+            BORDER_CHAR = mac_BORDER_CHAR;
+            BLOCK_CHAR = mac_BLOCK_CHAR;
+            BLANK_CHAR = mac_BLANK_CHAR;
+        }
+
         styleSet = new SimpleAttributeSet();
         StyleConstants.setFontSize(styleSet, display_height/34);
         StyleConstants.setFontFamily(styleSet, "Courier");
@@ -86,20 +114,83 @@ public class VSmode extends JFrame {
         StyleConstants.setForeground(styleSet2, Color.WHITE);
         StyleConstants.setAlignment(styleSet2, StyleConstants.ALIGN_CENTER);
 
-        timer = new Timer(1000, new ActionListener() {
+        p1.timer = new Timer(1000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
                     moveDown(p1);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+                drawBoard(p1);
+                //System.out.println(timer.getDelay());
+                if(p1.sprint>p1.SPMAX){
+                    p1.sprint=p1.SPMAX;
+                }
+                p1.timer.setDelay(p1.initInterval-p1.sprint);
+            }
+        });
+
+        p2.timer = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
                     moveDown(p2);
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
-                timer.setDelay(1000);
+                drawBoard(p2);
+                //System.out.println(timer.getDelay());
+                if(p2.sprint>p2.SPMAX){
+                    p2.sprint=p2.SPMAX;
+                }
+                p2.timer.setDelay(p2.initInterval-p2.sprint);
             }
         });
 
-        timer.start();
+        p1.press_timer = new Timer(200, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    pressDown(p1);
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+                drawBoard(p1);
+            }
+        });
+
+        p2.press_timer = new Timer(200, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    pressDown(p2);
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+                drawBoard(p2);
+            }
+        });
+
+        p1.erase_timer = new Timer(100, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                eraseLine(p1);
+                drawBoard(p1);
+            }
+        });
+
+        p1.erase_timer = new Timer(100, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                eraseLine(p1);
+                drawBoard(p1);
+            }
+        });
+
+
+        p1.timer.start();
+        p2.timer.start();
         setTitle("VSMode");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
@@ -204,8 +295,15 @@ public class VSmode extends JFrame {
     }
 
     public void drawBoard(Player p) {
-        int extra_border = 2;
-
+        int win_extra_border = 4;
+        int mac_extra_border = 2;
+        int extra_border;
+        if(os.contains("win")) {
+            extra_border = win_extra_border;
+        }
+        else {
+            extra_border = mac_extra_border;
+        }
         JTextPane pane = p.pane;
         int[][] board = p.board;
         Color[][] color_board = p.color_board;
@@ -226,7 +324,7 @@ public class VSmode extends JFrame {
                 for (int j = 0; j < board[i].length; j++) {
                     if (board[i][j] != 0) {
                         StyleConstants.setForeground(styleSet, color_board[i][j]);
-                        doc.insertString(doc.getLength(), BLOCK_CHAR, styleSet);
+                        doc.insertString(doc.getLength(), Character.toString(BLOCK_CHAR_LIST.charAt(board[i][j])), styleSet);
                         //sb.append(BLOCK_CHAR);
                         StyleConstants.setForeground(styleSet, Color.WHITE);
                     } else {
@@ -273,7 +371,7 @@ public class VSmode extends JFrame {
         for(int i=0; i < NEXT_HEIGHT; i++) {
             for(int j=0; j < NEXT_WIDTH; j++) {
                 if(next_board[i][j] != 0) {
-                    sb.append(BLOCK_CHAR);
+                    sb.append(Character.toString(BLOCK_CHAR_LIST.charAt(next_board[i][j])));
                 } else {
                     sb.append(BLANK_CHAR);
                 }
@@ -297,6 +395,10 @@ public class VSmode extends JFrame {
             int offset = x;
             for(int i=0; i<curr.width(); i++) {
                 if(board[y+j][x+i] == 0) {
+                    board[y + j][x + i] = curr.getShape(i, j);
+                    color_board[y+j][x+i] = curr.getColor();
+                }
+                else if(curr.getClass().getName().contains("Press")){
                     board[y + j][x + i] = curr.getShape(i, j);
                     color_board[y+j][x+i] = curr.getColor();
                 }
@@ -391,13 +493,15 @@ public class VSmode extends JFrame {
     public void pause() {
         if(!ispaused){
             ispaused = true;
-            timer.stop();
+            p1.timer.stop();
+            p2.timer.stop();
 
         }
         else{
             this.setVisible(true);
             ispaused = false;
-            timer.start();
+            p1.timer.start();
+            p2.timer.start();
         }
     }
 
@@ -458,6 +562,37 @@ public class VSmode extends JFrame {
         moveDown(p);
     }
 
+    protected void pressDown(Player p) throws IOException {
+        int y=p.y;
+        int x=p.x;
+        Block curr=p.curr;
+        int [][] board=p.board;
+        if(y + curr.height() < HEIGHT) {
+            eraseCurr(p);
+            y++;
+        }
+        else{
+            p.press_timer.stop();
+            placeBlock(p);
+            for(int i = y; i<y+curr.height(); i++) {
+                for (int j = 0; j < WIDTH; j++) {
+                    if(board[i][j]==6){
+                        board[i][j] = 0;
+                    }
+                }
+            }
+            drawBoard(p);
+            p.timer.start();
+            p.timerflag=1;
+            ready_next(p);
+            x = 3;
+            y = 0;
+
+        }
+        placeBlock(p);
+        drawBoard(p);
+    }
+
     protected void moveDown(Player p) throws IOException { //구조를 조금 바꿈 갈수잇는지 먼저 확인후에 갈수있으면 지우고 이동
         int total_score = p.total_score;
 
@@ -465,7 +600,20 @@ public class VSmode extends JFrame {
             eraseCurr(p);
             p.y++;
         }
+        else if(isBlocked('d',p)&&p.curr.getClass().getName().contains("Press")){
+            placeBlock(p);
+            p.timer.stop();
+            p.timerflag=0;
+            p.press_timer.start();
+        }
+        else if(checkEraseRow(p)){
+            placeBlock(p);
+            p.timer.stop();
+            p.timerflag=0;
+            p.erase_timer.start();
+        }
         else {
+            p.timerflag=1;
             placeBlock(p);
             eraseRow(p);
             at(p);
@@ -473,7 +621,7 @@ public class VSmode extends JFrame {
             p.x = 3;
             p.y = 0;
             if(isBlocked('d', p)){
-                timer.stop();
+                p.timer.stop();
                 new EndGame(this.getLocation().x, this.getLocation().y, total_score, "normalScore");
                 this.dispose();
             }
@@ -490,9 +638,40 @@ public class VSmode extends JFrame {
 
 
     protected void ready_next(Player p) throws IOException {
-
         p.curr = p.next_block;
-        p.next_block = getRandomBlock();
+        if(mode == item_mode)
+        {
+            if(true || p.item_rotate > 4) {
+                //item_rotate -= 5;
+                p.next_block = getRandomBlock();
+                Random rnd = new Random();
+                if(rnd.nextInt(100) < 80)
+                    p.next_block.make_item();
+                else p.next_block = new Press();
+            }
+            else p.next_block = getRandomBlock();
+        }
+        else p.next_block = getRandomBlock();
+    }
+
+    protected void eraseLine(Player p){
+        int lowest = p.y + p.curr.height() -1;
+        if(p.erase_line_check<2){
+            p.erase_line_check++;
+            for(int i=lowest;i>=p.y;i--){
+                for(int j=0;j<WIDTH;j++){
+                    if(p.board[i][j]>6){
+                        p.board[i][j]-=animate_idx;
+                    }
+                }
+            }
+        }
+        else{
+            p.erase_timer.stop();
+            p.timer.start();
+        }
+        placeBlock(p);
+        drawBoard(p);
     }
 
     protected void eraseRow(Player p) {
@@ -502,6 +681,7 @@ public class VSmode extends JFrame {
 
         int lowest = y + curr.height() -1;
         int cnt = 0;
+        boolean double_score = false;
 
 //        for(int i = lowest; i>=y; i--){
         int[] erase_list = new int[4];
@@ -512,6 +692,33 @@ public class VSmode extends JFrame {
                 {
                     canErase = false;
                     break;
+                }
+
+            }
+            if(mode == item_mode) {
+                for(int j = 0; j < WIDTH; j++) {
+                    if (BLOCK_CHAR_LIST.charAt(board[i][j]) == 'L') {
+                        canErase = true;
+                    }
+                }
+                for(int j=0; j<WIDTH; j++)
+                {
+                    if(BLOCK_CHAR_LIST.charAt(board[i][j]) == 'E'){
+                        for(int ii = 0; ii<HEIGHT; ii++)
+                        {
+                            for(int jj =0; jj<WIDTH; jj++)
+                                board[ii][jj] = 0;
+                        }
+                        canErase = false;
+                        break;
+                    }
+                }
+                for(int j=0; j<WIDTH; j++)
+                {
+                    if(BLOCK_CHAR_LIST.charAt(board[i][j]) == 'D')
+                    {
+                        double_score = true;
+                    }
                 }
             }
             if(canErase) {
@@ -525,11 +732,43 @@ public class VSmode extends JFrame {
         if(cnt > 1)
             make_attack(erase_list, cnt, p);
 
-        cal_score(cnt,p);
+        cal_score(cnt,double_score,p);
         for(int i = lowest; i>=0; i--){
             down(i,p);
         }
     }
+
+    protected boolean checkEraseRow(Player p){
+        if(p.erase_timer.isRunning()||p.erase_line_check!=0){
+            p.erase_line_check=0;
+            return false;
+        }
+        int lowest = p.y + p.curr.height() -1;
+        boolean erase=false;
+        for(int i = lowest; i>=p.y; i--){
+            boolean canErase = true;
+            for(int j = 0; j < WIDTH; j++){
+                if(BLOCK_CHAR_LIST.charAt(p.board[i][j]) == 'L'){//line erase
+                    canErase=true;
+                    break;
+                }
+                if(p.board[i][j] == 0)
+                {
+                    canErase = false;
+                }
+            }
+            if(canErase) {
+                for(int j = 0; j<WIDTH; j++) {
+                    if(p.board[i][j]!=0) {
+                        p.board[i][j] += animate_idx;
+                        erase = true;
+                    }
+                }
+            }
+        }
+        return erase;
+    }
+
     private void make_attack(int[] erase_list, int cnt, Player p) {
         int y = p.y, x = p.x;
         int[][] attack = new int[cnt][ATTACK_WIDTH];
@@ -574,11 +813,15 @@ public class VSmode extends JFrame {
         }
     }
 
-    protected void cal_score(int combo, Player p){
+    protected void cal_score(int combo,boolean double_score, Player p){
         if(combo > 0) {
             p.total_score = p.total_score + combo + combo - 1;
+            if(double_score == true)
+                p.total_score *= 2;
         }
         p.num_eraseline += combo;
+        if(mode == item_mode)
+            p.item_rotate += combo;
     }
 
     private boolean isBlocked(char move, Player p){ //블럭이 갈 수 있는지 확인하는 함수('d' : 아래, 'r' : 오른쪽, 'l' : 왼쪽)
@@ -586,6 +829,8 @@ public class VSmode extends JFrame {
         Block curr = p.curr;
         int[][] board = p.board;
 
+        if(p.timerflag==0)
+            return true;
         if(move == 'd') { //down
             if(y + curr.height() < HEIGHT) {
                 for (int i = x; i < x + curr.width(); i++) {
@@ -632,6 +877,8 @@ public class VSmode extends JFrame {
             else return true;
         }
         else if(move == 't') { //돌릴 수 있는지 확인
+            if(curr.getClass().getName().contains("Press"))
+                return true;
             curr.rotate();
             int tmpX = x + curr.getCentermovedX();
             int tmpY = y + curr.getCentermovedY();
@@ -671,48 +918,53 @@ public class VSmode extends JFrame {
         @Override
         public void keyPressed(KeyEvent e) {
             try {
-                if(e.getKeyCode() == key_left1) {
-                    moveLeft(p2);
-                    drawBoard(p2);
+                if(p2.timerflag!=0) {
+                    if (e.getKeyCode() == key_left1) {
+                        moveLeft(p2);
+                        drawBoard(p2);
+                    }
+                    if (e.getKeyCode() == key_right1) {
+                        moveRight(p2);
+                        drawBoard(p2);
+                    }
+                    if (e.getKeyCode() == key_rotate1) {
+                        rotateblock(p2);
+                        //System.out.println("width : " + curr.width() + " height : " + curr.height());
+                        drawBoard(p2);
+                    }
+                    if (e.getKeyCode() == key_harddrop1) {
+                        harddrop(p2);
+                    }
+                    if (e.getKeyCode() == key_down1) {
+                        moveDown(p2);
+                        drawBoard(p2);
+                    }
                 }
-                if(e.getKeyCode() == key_right1) {
-                    moveRight(p2);
-                    drawBoard(p2);
-                }
-                if(e.getKeyCode() == key_rotate1) {
-                    rotateblock(p2);
-                    //System.out.println("width : " + curr.width() + " height : " + curr.height());
-                    drawBoard(p2);
-                }
-                if(e.getKeyCode() == key_harddrop1) {
-                    harddrop(p2);
+
+                if(p1.timerflag!=0) {
+                    if (e.getKeyCode() == key_left2) {
+                        moveLeft(p1);
+                        drawBoard(p1);
+                    }
+                    if (e.getKeyCode() == key_right2) {
+                        moveRight(p1);
+                        drawBoard(p1);
+                    }
+                    if (e.getKeyCode() == key_rotate2) {
+                        rotateblock(p1);
+                        //System.out.println("width : " + curr.width() + " height : " + curr.height());
+                        drawBoard(p1);
+                    }
+                    if (e.getKeyCode() == key_harddrop2) {
+                        harddrop(p1);
+                    }
+                    if (e.getKeyCode() == key_down2) {
+                        moveDown(p1);
+                        drawBoard(p1);
+                    }
                 }
                 if(e.getKeyCode() == key_pause1) {
                     pause();
-                }
-                if(e.getKeyCode() == key_down1) {
-                    moveDown(p2);
-                    drawBoard(p2);
-                }
-                if(e.getKeyCode() == key_left2) {
-                    moveLeft(p1);
-                    drawBoard(p1);
-                }
-                if(e.getKeyCode() == key_right2) {
-                    moveRight(p1);
-                    drawBoard(p1);
-                }
-                if(e.getKeyCode() == key_rotate2) {
-                    rotateblock(p1);
-                    //System.out.println("width : " + curr.width() + " height : " + curr.height());
-                    drawBoard(p1);
-                }
-                if(e.getKeyCode() == key_harddrop2) {
-                    harddrop(p1);
-                }
-                if(e.getKeyCode() == key_down2) {
-                    moveDown(p1);
-                    drawBoard(p1);
                 }
             }
             catch(IOException ex) {
@@ -736,9 +988,17 @@ public class VSmode extends JFrame {
         public Color[][] color_board;
         public Block curr;
         public Block next_block;
+
         public int x = 3, y = 0;
         public int total_score = 0;
         public int num_eraseline = 0;
+        public int item_rotate = 0;
+        public static final int initInterval = 1000;
+        int sprint=0;
+        public static final int SPMAX=900;
+
+        public int timerflag;
+        public int erase_line_check=0;
 
         // layout
         public BoardLayout player;
@@ -749,5 +1009,9 @@ public class VSmode extends JFrame {
         public JTextPane attack_pane;
 
         public int sirial;
+
+        private Timer timer;
+        private Timer press_timer;
+        private Timer erase_timer;
     }
 }
