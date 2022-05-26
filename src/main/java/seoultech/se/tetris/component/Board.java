@@ -769,7 +769,6 @@ public class Board extends JFrame {
 		sprint = 0;
 		drawBoard();
 	}
-
 	public class PlayerKeyListener implements KeyListener {
 		@Override
 		public void keyTyped(KeyEvent e) {
@@ -791,7 +790,6 @@ public class Board extends JFrame {
 				}
 				else if(e.getKeyCode() == key_rotate) {
 					rotateblock();
-					//System.out.println("width : " + curr.width() + " height : " + curr.height());
 					drawBoard();
 				}
 				else if(e.getKeyCode() == key_harddrop) {
@@ -815,5 +813,5 @@ public class Board extends JFrame {
 
 		}
 	}
-	
+
 }

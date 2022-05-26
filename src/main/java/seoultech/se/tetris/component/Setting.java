@@ -9,7 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 
-public class Setting extends JFrame {
+public class Setting extends JFrame implements ActionListener{
     private Container container;
     private JPanel backButtonPanel, menuPanel;
     private JButton backButton;
@@ -38,7 +38,7 @@ public class Setting extends JFrame {
         backButtonPanel.setBounds(10,10,backButton.getWidth(),backButton.getHeight());
         backButtonPanel.setOpaque(false);
 
-        backButton.addActionListener(listner);
+        backButton.addActionListener(this);
         backButtonPanel.add(backButton);
     }
 
@@ -67,7 +67,7 @@ public class Setting extends JFrame {
         level.setRolloverIcon(level_activate);
         level.setBorderPainted(false);
         level.setPreferredSize(new Dimension(180, 60));
-        level.addActionListener(listner);
+        level.addActionListener(this);
         level.setOpaque(false);
         levelPanel.add(level);
 
@@ -76,7 +76,7 @@ public class Setting extends JFrame {
         colorWeak.setRolloverIcon(colorweak_activate);
         colorWeak.setBorderPainted(false);
         colorWeak.setPreferredSize(new Dimension(180, 60));
-        colorWeak.addActionListener(listner);
+        colorWeak.addActionListener(this);
         colorWeak.setOpaque(false);
         colorWeakPanel.add(colorWeak);
 
@@ -85,7 +85,7 @@ public class Setting extends JFrame {
         display.setRolloverIcon(display_activate);
         display.setBorderPainted(false);
         display.setPreferredSize(new Dimension(180, 60));
-        display.addActionListener(listner);
+        display.addActionListener(this);
         display.setOpaque(false);
         displayPanel.add(display);
 
@@ -94,7 +94,7 @@ public class Setting extends JFrame {
         keySetting.setRolloverIcon(keymapping_activate);
         keySetting.setBorderPainted(false);
         keySetting.setPreferredSize(new Dimension(180, 60));
-        keySetting.addActionListener(listner);
+        keySetting.addActionListener(this);
         keySetting.setOpaque(false);
         keySettingPanel.add(keySetting);
 
@@ -103,7 +103,7 @@ public class Setting extends JFrame {
         reset.setRolloverIcon(reset_activate);
         reset.setBorderPainted(false);
         reset.setPreferredSize(new Dimension(180, 60));
-        reset.addActionListener(listner);
+        reset.addActionListener(this);
         reset.setOpaque(false);
         resetPanel.add(reset);
 
@@ -114,36 +114,35 @@ public class Setting extends JFrame {
         menuPanel.add(resetPanel);
     }
 
-    ActionListener listner = new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (backButton.equals(e.getSource())) { //terminateButton pressed
-                new TetrisMenu(getThis().getLocation().x, getThis().getLocation().y);
-                disPose();
-            }
-            else if (level.equals(e.getSource())) { // restartButton pressed
-                new LevelSetting(getThis().getLocation().x, getThis().getLocation().y);
-                disPose();
-            }
-            else if (colorWeak.equals(e.getSource())) { // restartButton pressed
-                new ColorWeakSetting(getThis().getLocation().x, getThis().getLocation().y);
-                disPose();
-            }
-            else if (display.equals(e.getSource())) { // restartButton pressed
-                new DisplaySetting(getThis().getLocation().x, getThis().getLocation().y);
-                disPose();
-            }
-            else if (keySetting.equals(e.getSource())) { // restartButton pressed
-                new KeySetting(getThis().getLocation().x, getThis().getLocation().y);
-                disPose();
-            }
-            else if (reset.equals(e.getSource())) { // restartButton pressed
-                new Resetting(getThis().getLocation().x, getThis().getLocation().y);
-                disPose();
-//                DataManager.getInstance().resetting();
-            }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (backButton.equals(e.getSource())) { //terminateButton pressed
+            new TetrisMenu(getThis().getLocation().x, getThis().getLocation().y);
+            disPose();
         }
-    };
+        else if (level.equals(e.getSource())) { // restartButton pressed
+            new LevelSetting(getThis().getLocation().x, getThis().getLocation().y);
+            disPose();
+        }
+        else if (colorWeak.equals(e.getSource())) { // restartButton pressed
+            new ColorWeakSetting(getThis().getLocation().x, getThis().getLocation().y);
+            disPose();
+        }
+        else if (display.equals(e.getSource())) { // restartButton pressed
+            new DisplaySetting(getThis().getLocation().x, getThis().getLocation().y);
+            disPose();
+        }
+        else if (keySetting.equals(e.getSource())) { // restartButton pressed
+            new KeySetting(getThis().getLocation().x, getThis().getLocation().y);
+            disPose();
+        }
+        else if (reset.equals(e.getSource())) { // restartButton pressed
+            new Resetting(getThis().getLocation().x, getThis().getLocation().y);
+            disPose();
+//                DataManager.getInstance().resetting();
+        }
+    }
+
 
     private void disPose() {
         this.dispose();
