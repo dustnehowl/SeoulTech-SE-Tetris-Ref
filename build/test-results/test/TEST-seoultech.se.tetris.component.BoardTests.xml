@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="seoultech.se.tetris.component.BoardTests" tests="3" skipped="0" failures="0" errors="0" timestamp="2022-04-22T00:23:55" hostname="gim-yeonsuui-MacBook-Pro.local" time="30.276">
+  <properties/>
+  <testcase name="설정이 normal인 경우" classname="seoultech.se.tetris.component.BoardTests" time="13.118"/>
+  <testcase name="설정이 easy인 경우" classname="seoultech.se.tetris.component.BoardTests" time="8.423"/>
+  <testcase name="설정이 hard인 경우" classname="seoultech.se.tetris.component.BoardTests" time="8.735"/>
+  <system-out><![CDATA[IBlock is more generate -0.030000001% than otherblock
+
+IBlock is more generate 21.777687% than otherblock
+
+IBlock is more generate -20.332071% than otherblock
+
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
