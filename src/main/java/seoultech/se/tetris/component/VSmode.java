@@ -16,6 +16,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 
 public class VSmode extends JFrame {
@@ -64,6 +65,7 @@ public class VSmode extends JFrame {
 
     public VSmode(int x, int y) throws IOException {
         super("SeoulTech SE Tetris VS Mode");
+        this.mode=item_mode;//mode 임의로 item_mode 확인
         this.setLocation(x, y);
         this.setLayout(new GridLayout(1,2,10,10));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -180,17 +182,18 @@ public class VSmode extends JFrame {
             }
         });
 
-        p1.erase_timer = new Timer(100, new ActionListener() {
+        p2.erase_timer = new Timer(100, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                eraseLine(p1);
-                drawBoard(p1);
+                eraseLine(p2);
+                drawBoard(p2);
             }
         });
 
-
         p1.timer.start();
+        p1.timerflag=1;
         p2.timer.start();
+        p2.timerflag=1;
         setTitle("VSMode");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
@@ -455,7 +458,7 @@ public class VSmode extends JFrame {
             if(j == new_board[0].length) break;
             else attack_num++;
         }
-        System.out.println(up_num + " " + attack_num);
+//        System.out.println(up_num + " " + attack_num);
 
         for(int i = ori_board.length - up_num; i< ori_board.length; i++){
             for(int j=0; j<ori_board[0].length; j++){
@@ -509,11 +512,10 @@ public class VSmode extends JFrame {
         int x = p.x;
         int y = p.y;
         Block curr = p.curr;
-        int[][] board = p.board;
         for (int i = y; i < y + curr.height(); i++) {
             for (int j = x; j < x + curr.width(); j++)
                 if(curr.getShape(j-x,i-y) != 0) // 요것도 히트 무작정 지우면 안됨
-                    board[i][j] = 0;
+                    p.board[i][j] = 0;
         }
     }
 
@@ -563,21 +565,18 @@ public class VSmode extends JFrame {
     }
 
     protected void pressDown(Player p) throws IOException {
-        int y=p.y;
-        int x=p.x;
-        Block curr=p.curr;
-        int [][] board=p.board;
-        if(y + curr.height() < HEIGHT) {
+        if(p.y + p.curr.height() < HEIGHT) {
             eraseCurr(p);
-            y++;
+            p.y++;
+//            System.out.println("y++"+p.y);
         }
         else{
             p.press_timer.stop();
             placeBlock(p);
-            for(int i = y; i<y+curr.height(); i++) {
+            for(int i = p.y; i<p.y+p.curr.height(); i++) {
                 for (int j = 0; j < WIDTH; j++) {
-                    if(board[i][j]==6){
-                        board[i][j] = 0;
+                    if(p.board[i][j]==6){
+                        p.board[i][j] = 0;
                     }
                 }
             }
@@ -585,8 +584,8 @@ public class VSmode extends JFrame {
             p.timer.start();
             p.timerflag=1;
             ready_next(p);
-            x = 3;
-            y = 0;
+            p.x = 3;
+            p.y = 0;
 
         }
         placeBlock(p);
@@ -675,20 +674,17 @@ public class VSmode extends JFrame {
     }
 
     protected void eraseRow(Player p) {
-        int x = p.x, y = p.y;
-        Block curr = p.curr;
-        int board[][] = p.board;
-
-        int lowest = y + curr.height() -1;
+        int lowest = p.y + p.curr.height() -1;
         int cnt = 0;
         boolean double_score = false;
+        int[][] board=p.board;
 
 //        for(int i = lowest; i>=y; i--){
         int[] erase_list = new int[4];
-        for(int i=0; i<curr.height(); i++){
+        for(int i=0; i<p.curr.height(); i++){
             boolean canErase = true;
             for(int j = 0; j < WIDTH; j++){
-                if(board[y+i][j] == 0)
+                if(p.board[p.y+i][j] == 0)
                 {
                     canErase = false;
                     break;
@@ -697,35 +693,29 @@ public class VSmode extends JFrame {
             }
             if(mode == item_mode) {
                 for(int j = 0; j < WIDTH; j++) {
-                    if (BLOCK_CHAR_LIST.charAt(board[i][j]) == 'L') {
+                    if (BLOCK_CHAR_LIST.charAt(p.board[p.y+i][j]) == 'L') {
                         canErase = true;
                     }
-                }
-                for(int j=0; j<WIDTH; j++)
-                {
-                    if(BLOCK_CHAR_LIST.charAt(board[i][j]) == 'E'){
-                        for(int ii = 0; ii<HEIGHT; ii++)
-                        {
-                            for(int jj =0; jj<WIDTH; jj++)
-                                board[ii][jj] = 0;
+                    if (BLOCK_CHAR_LIST.charAt(p.board[p.y+i][j]) == 'E') {
+                        for (int ii = 0; ii < HEIGHT; ii++) {
+                            for (int jj = 0; jj < WIDTH; jj++) {
+                                p.board[ii][jj] = 0;
+                            }
                         }
                         canErase = false;
                         break;
                     }
-                }
-                for(int j=0; j<WIDTH; j++)
-                {
-                    if(BLOCK_CHAR_LIST.charAt(board[i][j]) == 'D')
-                    {
+                    if (BLOCK_CHAR_LIST.charAt(p.board[p.y+i][j]) == 'D') {
                         double_score = true;
                     }
                 }
+
             }
             if(canErase) {
                 erase_list[cnt] = i;
                 cnt += 1;
                 for(int j = 0; j<WIDTH; j++) {
-                    p.board[y+i][j] = 0;
+                    p.board[p.y+i][j] = 0;
                 }
             }
         }
